@@ -1,7 +1,8 @@
-import { CommandType } from "../typings/Command";
+import { CommandOptions } from '../typings/Command'
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Command {
-    constructor(commandOptions: CommandType) {
-        Object.assign(this, commandOptions);
+    constructor (options: CommandOptions) {
+        Object.assign(this, options)
     }
 }

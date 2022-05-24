@@ -3,71 +3,77 @@ import {
     Client,
     ClientEvents,
     Collection
-} from "discord.js";
-import { CommandType } from "../typings/Command";
-import glob from "glob";
-import { promisify } from "util";
-import { RegisterCommandsOptions } from "../typings/client";
-import { Event } from "./Event";
+} from 'discord.js'
+import glob from 'glob'
+import { join } from 'node:path'
+import { promisify } from 'node:util'
 
-const globPromise = promisify(glob);
+import { RegisterCommandsOptions } from '../typings/client'
+import { CommandOptions } from '../typings/Command'
+import { Event } from './Event'
+
+const globPromise = promisify(glob)
 
 export class ExtendedClient extends Client {
-    commands: Collection<string, CommandType> = new Collection();
+    commands: Collection<string, CommandOptions> = new Collection()
 
-    constructor() {
-        super({ intents: 32767 });
+    constructor () {
+        super({ intents: 32767 })
     }
 
-    start() {
-        this.registerModules();
-        this.login(process.env.botToken);
-    }
-    async importFile(filePath: string) {
-        return (await import(filePath))?.default;
+    async start (): Promise<void> {
+        await this.registerModules()
+        await this.login(process.env.botToken)
     }
 
-    async registerCommands({ commands, guildId }: RegisterCommandsOptions) {
-        if (guildId) {
-            this.guilds.cache.get(guildId)?.commands.set(commands);
-            console.log(`Registering commands to ${guildId}`);
+    async importFile (filePath: string): Promise<any> {
+        return (await import(filePath))?.default
+    }
+
+    async registerCommands (options: RegisterCommandsOptions): Promise<void> {
+        if (options.guildId != null && options.guildId === '') {
+            this.guilds.cache.get(options.guildId)?.commands?.set(options.commands)
+            console.log(`Registering commands to ${options.guildId}`)
         } else {
-            this.application?.commands.set(commands);
-            console.log("Registering global commands");
+            this.application?.commands.set(options.commands)
+            console.log('Registering global commands')
         }
     }
 
-    async registerModules() {
+    async registerModules (): Promise<void> {
         // Commands
-        const slashCommands: ApplicationCommandDataResolvable[] = [];
+        const slashCommands: Array<ApplicationCommandDataResolvable> = []
         const commandFiles = await globPromise(
-            `${__dirname}/../commands/*/*{.ts,.js}`
-        );
-        commandFiles.forEach(async (filePath) => {
-            const command: CommandType = await this.importFile(filePath);
-            if (!command.name) return;
-            console.log(command);
+            join(__dirname, '..', 'commands', '*', '*{.ts,.js}')
+        )
 
-            this.commands.set(command.name, command);
-            slashCommands.push(command);
-        });
+        for await (const filePath of commandFiles) {
+            const command: CommandOptions = await this.importFile(filePath)
 
-        this.on("ready", () => {
-            this.registerCommands({
+            if (command.name === '') {
+                return
+            }
+
+            console.log(command)
+            this.commands.set(command.name, command)
+            slashCommands.push(command)
+        }
+
+        this.on('ready', async () => {
+            await this.registerCommands({
                 commands: slashCommands,
                 guildId: process.env.guildId
-            });
-        });
+            })
+        })
 
         // Event
         const eventFiles = await globPromise(
-            `${__dirname}/../events/*{.ts,.js}`
-        );
-        eventFiles.forEach(async (filePath) => {
-            const event: Event<keyof ClientEvents> = await this.importFile(
-                filePath
-            );
-            this.on(event.event, event.run);
-        });
+            join(__dirname, '..', 'events', '*{.ts,.js}')
+        )
+
+        for await (const filePath of eventFiles) {
+            const event: Event<keyof ClientEvents> = await this.importFile(filePath)
+            this.on(event.event, event.run)
+        }
     }
 }

@@ -1,10 +1,9 @@
-import { Command } from "../../structures/Command";
+import { Command } from '../../structures/Command'
 
 export default new Command({
-    name: "ping",
-    description: "replies with pong",
-    run: async ({ interaction }) => {
-        interaction.followUp("GoodJob");
+    name: 'ping',
+    description: 'replies with pong',
+    run: async ({ interaction }): Promise<void> => {
+        await interaction.followUp('GoodJob')
     }
-});
-
+})
