@@ -6,4 +6,4 @@ dotenv.config()
 
 export const client = new ExtendedClient()
 
-client.start()
+void client.start()
