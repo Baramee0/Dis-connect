@@ -4,7 +4,7 @@
     "main": "index.js",
     "scripts": {
         "start": "ts-node src/index.ts",
-        "dev": "ts-node-dev src/index.ts",
+        "dev": "ts-node-dev src/api/index.ts",
         "start:prod": "node dist/index.js",
         "lint": "eslint ./src/**/*.ts",
         "fix": "eslint ./src/**/*.ts --fix",
@@ -18,10 +18,17 @@
     "dependencies": {
         "@azure/identity": "^2.0.5",
         "@azure/keyvault-secrets": "^4.4.0",
+        "@azure/msal-node": "^1.10.0",
         "@microsoft/microsoft-graph-client": "^3.0.2",
+        "@types/qs": "^6.9.7",
+        "axios": "^0.27.2",
         "discord.js": "^13.7.0",
         "dotenv": "^10.0.0",
-        "glob": "^7.2.3"
+        "glob": "^7.2.3",
+        "isomorphic-fetch": "^3.0.0",
+        "node-fetch": "^3.2.6",
+        "path": "^0.12.7",
+        "qs": "^6.10.5"
     },
     "devDependencies": {
         "@microsoft/microsoft-graph-types": "^2.20.0",

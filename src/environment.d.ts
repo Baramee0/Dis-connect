@@ -4,6 +4,9 @@ declare global {
             botToken: string
             guildId: string
             environment: 'dev' | 'prod' | 'debug'
+            MicrosoftAppId: string
+            MicrosoftAppPassword: string
+            MicrosoftAppTenantId: string
         }
     }
 }
