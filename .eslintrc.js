@@ -69,7 +69,7 @@ module.exports = {
                 'no-useless-constructor': 'off',
                 'quote-props': ['error', 'consistent'],
                 '@typescript-eslint/array-type': ['error', { default: 'generic', readonly: 'generic' }],
-                'camelcase': ['error']
+                'camelcase': ['off']
             }
         }
     ]

@@ -29,13 +29,13 @@ async function getUsers (): Promise<any> {
     const client = createAuthenticatedClient()
 
     const request = await client.api('/users')
-        .select('id, displayName, mail')
+        .select('id, displayName')
         .get()
         .catch((error) => {
             console.log(error)
         })
 
-    console.log(request.value)
+    console.log(request)
 }
 
 void getUsers()

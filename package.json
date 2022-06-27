@@ -25,6 +25,7 @@
         "discord.js": "^13.7.0",
         "dotenv": "^10.0.0",
         "glob": "^7.2.3",
+        "got": "11",
         "isomorphic-fetch": "^3.0.0",
         "node-fetch": "^3.2.6",
         "path": "^0.12.7",

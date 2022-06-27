@@ -1,21 +1,39 @@
 import axios from 'axios'
-import qs from 'qs'
+import dotenv from 'dotenv'
 
 import { AuthenticationProvider } from '@microsoft/microsoft-graph-client'
 
+dotenv.config()
+
+// eslint-ignore @typescript-eslint/camelcase
+interface ClientCredentialAuthenticationProviderBody {
+    client_id: string
+    client_secret: string
+    scope: string
+    grant_type: string
+}
+
+interface ClientCredentialAuthenticationProviderResponseData {
+    access_token: string
+}
+
 export class ClientCredentialAuthenticationProvider implements AuthenticationProvider {
     public async getAccessToken (): Promise<string> {
-        const url: string = 'https://login.microsoftonline.com/' + process.env.MicrosoftAppTenantId + '/oauth2/v2.0/token'
+        const tenantId = process.env.MicrosoftAppTenantId ?? ''
+        const url: string = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`
 
-        const body: object = {
-            client_id: process.env.MicrosoftAppId,
-            client_secret: process.env.MicrosoftAppPassword,
+        const body: ClientCredentialAuthenticationProviderBody = {
+            client_id: process.env.MicrosoftAppId ?? '',
+            client_secret: process.env.MicrosoftAppPassword ?? '',
             scope: 'https://graph.microsoft.com/.default',
             grant_type: 'client_credentials'
         }
 
         try {
-            const response = await axios.post(url, qs.stringify(body))
+            const response = await axios.request<ClientCredentialAuthenticationProviderResponseData>({
+                url,
+                data: body
+            })
 
             if (response.status === 200) {
                 return response.data.access_token
@@ -23,6 +41,7 @@ export class ClientCredentialAuthenticationProvider implements AuthenticationPro
                 throw new Error('Non 200OK response on obtaining token...')
             }
         } catch (error) {
+            console.error(error)
             throw new Error('Error on obtaining token...')
         }
     }
