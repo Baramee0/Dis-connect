@@ -1,41 +1,76 @@
-import { config } from 'dotenv'
-import path from 'path'
+import dotenv from 'dotenv'
 
-import { Client, ClientOptions } from '@microsoft/microsoft-graph-client'
+import {
+    AuthorizationCodeCredential,
+    DeviceCodeCredential
+} from '@azure/identity'
+import {
+    AuthenticationHandler,
+    Client,
+    Context,
+    HTTPMessageHandler,
+    Middleware
+} from '@microsoft/microsoft-graph-client'
+import {
+    TokenCredentialAuthenticationProvider
+} from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials'
 
-import { ClientCredentialAuthenticationProvider } from './AuthenticationProvider'
+dotenv.config()
 
-import 'isomorphic-fetch'
+class CustomLoggingHandler implements Middleware {
+    private nextMiddleware: any = null
 
-// Read environment variables from .env file
-const ENV_FILE = path.join(__dirname, '.env')
-config({ path: ENV_FILE })
-
-// Create Graph SDK Client
-function createAuthenticatedClient (): Client {
-    const clientOptions: ClientOptions = {
-        defaultVersion: 'v1.0',
-        debugLogging: false,
-        authProvider: new ClientCredentialAuthenticationProvider()
+    execute = async (context: Context): Promise<void> => {
+        // eslint-disable-next-line
+        console.log(`Logging request: ${context.request.toString()}`)
+        // eslint-disable-next-line
+        return await this.nextMiddleware.execute(context)
     }
 
-    const client = Client.initWithMiddleware(clientOptions)
-
-    return client
+    setNext = (middleware: Middleware): void => {
+        this.nextMiddleware = middleware
+    }
 }
 
-// Get Users from Graph
-async function getUsers (): Promise<any> {
-    const client = createAuthenticatedClient()
+const tenantId = process.env.tenantId
+const clientId = process.env.clientId
 
-    const request = await client.api('/users')
-        .select('id, displayName')
-        .get()
-        .catch((error) => {
-            console.log(error)
-        })
+const credentials = new DeviceCodeCredential({
+    tenantId,
+    clientId,
+    userPromptCallback: (info) => {
+        console.log('CUSTOMIZED PROMPT CALLBACK', info.message)
+    }
+})
 
-    console.log(request)
-}
+const authProvider = new TokenCredentialAuthenticationProvider(credentials, {
+    scopes: ['User.Read']
+})
 
-void getUsers()
+const credential = new AuthorizationCodeCredential(
+    '<YOUR_TENANT_ID>',
+    '<YOUR_CLIENT_ID>',
+    '<AUTH_CODE_FROM_QUERY_PARAMETERS>',
+    '<REDIRECT_URL>'
+)
+
+// Create an authentication handler that uses custom auth provider
+const authHandler = new AuthenticationHandler(authProvider)
+
+// Create a custom logging handler
+const loggingHandler = new CustomLoggingHandler()
+
+// Create a standard HTTP message handler
+const httpHandler = new HTTPMessageHandler()
+
+authHandler.setNext(loggingHandler)
+loggingHandler.setNext(httpHandler)
+
+const client = Client.initWithMiddleware({
+    defaultVersion: 'v1.0',
+    debugLogging: true,
+    middleware: authHandler
+})
+const response: PageCollection = await client
+    .api('/me/messages?$top=10&$select=sender,subject')
+    .get()

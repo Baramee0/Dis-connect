@@ -1,5 +1,6 @@
 import axios from 'axios'
 import dotenv from 'dotenv'
+import FormData from 'form-data'
 
 import { AuthenticationProvider } from '@microsoft/microsoft-graph-client'
 
@@ -19,20 +20,29 @@ interface ClientCredentialAuthenticationProviderResponseData {
 
 export class ClientCredentialAuthenticationProvider implements AuthenticationProvider {
     public async getAccessToken (): Promise<string> {
-        const tenantId = process.env.MicrosoftAppTenantId ?? ''
+        const tenantId = process.env.tenantId ?? ''
         const url: string = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`
 
         const body: ClientCredentialAuthenticationProviderBody = {
-            client_id: process.env.MicrosoftAppId ?? '',
-            client_secret: process.env.MicrosoftAppPassword ?? '',
+            client_id: process.env.clientId ?? '',
+            client_secret: process.env.clientSecret ?? '',
             scope: 'https://graph.microsoft.com/.default',
-            grant_type: 'client_credentials'
+            grant_type: 'authorization_code'
         }
 
+        const form = new FormData()
+        form.append('client_id', body.client_id)
+        form.append('client_secret', body.client_secret)
+        form.append('scope', body.scope)
+        form.append('grant_type', body.grant_type)
         try {
             const response = await axios.request<ClientCredentialAuthenticationProviderResponseData>({
                 url,
-                data: body
+                method: 'POST',
+                data: form,
+                headers: {
+                    'Content-Type': `multipart/form-data; ${form.getBoundary()}`
+                }
             })
 
             if (response.status === 200) {
