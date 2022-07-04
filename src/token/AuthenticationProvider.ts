@@ -27,7 +27,7 @@ export class ClientCredentialAuthenticationProvider implements AuthenticationPro
             client_id: process.env.clientId ?? '',
             client_secret: process.env.clientSecret ?? '',
             scope: 'https://graph.microsoft.com/.default',
-            grant_type: 'authorization_code'
+            grant_type: 'implicit'
         }
 
         const form = new FormData()
